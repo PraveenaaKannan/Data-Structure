@@ -1,0 +1,83 @@
+#include <stdio.h>
+#include <stdlib.h>
+struct process {
+    int pid;
+    int burstTime;
+    struct process* next;
+};
+struct process* front = NULL;
+void addProcess(int burstTime) {
+    static int pidCounter = 1;
+    struct process* newProcess = (struct process*)malloc(sizeof(struct process));
+    if (newProcess == NULL) {
+        printf("Memory allocation failed\n");
+        exit(EXIT_FAILURE);
+    }
+    newProcess->pid = pidCounter++;
+    newProcess->burstTime = burstTime;
+    newProcess->next = NULL;
+    if (front == NULL) {
+        front = newProcess;
+    } else {
+        struct process* temp = front;
+        while (temp->next != NULL) {
+            temp = temp->next;
+        }
+        temp->next = newProcess;
+    }
+}
+void roundRobin(int quantum) {
+    int totalBurstTime = 0;
+    struct process* temp = front;
+    while (temp != NULL) {
+        totalBurstTime += temp->burstTime;
+        temp = temp->next;
+    }
+    while (totalBurstTime > 0) {
+        temp = front;
+        while (temp != NULL) {
+            if (temp->burstTime > 0) {
+                if (temp->burstTime > quantum) {
+                    printf("Process %d executes for %d units\n", temp->pid, quantum);
+                    totalBurstTime -= quantum;
+                    temp->burstTime -= quantum;
+                } else {
+                    printf("Process %d executes for %d units\n", temp->pid, temp->burstTime);
+                    totalBurstTime -= temp->burstTime;
+                    temp->burstTime = 0;
+                }
+            }
+            temp = temp->next;
+        }
+    }
+}
+void freeProcesses() {
+    struct process* temp;
+    while (front != NULL) {
+        temp = front;
+        front = front->next;
+        free(temp);
+    }
+}
+void inputProcesses() {
+    int numProcesses, burstTime, quantum;
+    printf("Enter the number of processes: ");
+    scanf("%d", &numProcesses);
+    for (int i = 0; i < numProcesses; i++) {
+        printf("Enter burst time for process %d: ", i + 1);
+        scanf("%d", &burstTime);
+        addProcess(burstTime);
+    }
+    printf("Enter the time quantum: ");
+    scanf("%d", &quantum);
+}
+int main() {
+    inputProcesses();
+    printf("\nMethod selected: Round Robin Scheduling\n");
+    int quantum;
+    printf("Enter the time quantum: ");
+    scanf("%d", &quantum);
+    roundRobin(quantum)
+   freeProcesses();
+    return 0;
+}
